@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Виджет заданий</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    h1 { text-align: center; }
+    #menu, #taskPage {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: #4CAF50;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 8px;
+      font-size: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    #result { font-weight: bold; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Выберите количество окошек</h1>
+  <div id="selection">
+    <input type="number" id="numBoxes" placeholder="Введите число окошек" min="1" max="10">
+    <button onclick="createMenu()">Создать меню</button>
+  </div>
+
+  <div id="menu"></div>
+
+  <div id="taskPage">
+    <p id="taskText">Задание: сколько будет 2 + 2?</p>
+    <input type="number" id="answer" placeholder="Ваш ответ">
+    <button onclick="checkTask()">Проверить задание</button>
+    <div id="result"></div>
+    <button id="nextBtn" onclick="goBackMenu()" style="display:none;">Следующее задание</button>
+  </div>
+
+  <script>
+    function createMenu() {
+      const num = parseInt(document.getElementById('numBoxes').value);
+      if(isNaN(num) || num < 1) return alert('Введите число от 1 до 10');
+      const menu = document.getElementById('menu');
+      menu.innerHTML = '';
+      for(let i=1; i<=num; i++) {
+        const box = document.createElement('div');
+        box.className = 'box';
+        box.textContent = i;
+        box.onclick = () => showTask(i);
+        menu.appendChild(box);
+      }
+      document.getElementById('selection').style.display = 'none';
+      menu.style.display = 'flex';
+      menu.style.flexWrap = 'wrap';
+      menu.style.gap = '10px';
+      menu.style.justifyContent = 'center';
+    }
+
+    function showTask(number) {
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('taskPage').style.display = 'flex';
+      document.getElementById('taskText').textContent = `Задание ${number}: сколько будет 2 + 2?`;
+      document.getElementById('answer').value = '';
+      document.getElementById('result').textContent = '';
+      document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function checkTask() {
+      const ans = parseInt(document.getElementById('answer').value);
+      const result = document.getElementById('result');
+      if(ans === 4) {
+        result.textContent = 'Верно!';
+        document.getElementById('nextBtn').style.display = 'inline-block';
+      } else {
+        result.textContent = 'Неправильно, попробуйте ещё.';
+      }
+    }
+
+    function goBackMenu() {
+      document.getElementById('taskPage').style.display = 'none';
+      document.getElementById('menu').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
