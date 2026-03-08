@@ -3,101 +3,49 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Всплывающее меню заданий</title>
+<title>Редактор заданий</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    display: flex;
-    height: 100vh;
-  }
-  /* Левая панель */
-  .sidebar {
-    width: 150px;
-    background-color: #2d2d2d;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    padding: 10px;
-  }
-  .sidebar button {
-    margin: 5px 0;
-    padding: 10px;
-    border: none;
-    background-color: #444;
-    color: #fff;
-    cursor: pointer;
-  }
-  .sidebar button.active {
-    background-color: #1e90ff;
-  }
+  body { font-family: Arial; margin: 0; display: flex; height: 100vh; }
+  .sidebar { width: 180px; background: #2d2d2d; color: #fff; display: flex; flex-direction: column; padding: 10px; overflow-y: auto;}
+  .sidebar button { margin: 5px 0; padding: 10px; border: none; cursor: pointer; background: #444; color: #fff; }
+  .sidebar button.active { background: #1e90ff; }
 
-  /* Основная область */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 20px;
-    position: relative;
-  }
+  .main { flex: 1; padding: 20px; position: relative; display: flex; flex-direction: column; }
+  .score { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; background: #1e90ff; color: #fff; display: flex; align-items:center; justify-content:center; font-weight: bold; font-size: 18px; }
+  
+  .task { flex: 1; margin: 20px 0; display: flex; flex-direction: column; }
+  .task h2 { margin-bottom: 10px; }
+  .task .options button { margin: 5px 0; padding: 10px; cursor: pointer; }
 
-  /* Баллы в правом верхнем углу */
-  .score {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: #1e90ff;
-    color: white;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 18px;
-  }
+  .check-btn { padding: 10px 20px; background: #1e90ff; color: #fff; border: none; cursor: pointer; align-self: flex-start; margin-top: 10px; }
 
-  /* Задание */
-  .task {
-    flex: 1;
-    margin: 20px 0;
-    display: flex;
-    flex-direction: column;
-  }
-  .task h2 {
-    margin-bottom: 10px;
-  }
-  .task .options button {
-    margin: 5px 0;
-    padding: 10px;
-    cursor: pointer;
-  }
-
-  /* Проверка */
-  .check-btn {
-    padding: 10px 20px;
-    background-color: #1e90ff;
-    color: white;
-    border: none;
-    cursor: pointer;
-    align-self: flex-start;
-  }
-
+  .editor { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; }
+  .editor input, .editor textarea { width: 100%; margin-bottom: 5px; }
 </style>
 </head>
 <body>
 
 <div class="sidebar" id="sidebar">
-  <!-- Кнопки заданий появятся динамически -->
+  <!-- Меню заданий -->
 </div>
 
 <div class="main">
   <div class="score" id="score">0</div>
+
+  <!-- Редактор заданий -->
+  <div class="editor" id="editor">
+    <h3>Добавить новое задание</h3>
+    <textarea id="question" placeholder="Вопрос"></textarea>
+    <input type="text" placeholder="Вариант 1" id="opt0">
+    <input type="text" placeholder="Вариант 2" id="opt1">
+    <input type="text" placeholder="Вариант 3" id="opt2">
+    <input type="number" placeholder="Номер правильного варианта (0,1,2)" id="answer" min="0" max="2">
+    <button onclick="addTask()">Добавить задание</button>
+  </div>
+
+  <!-- Отображение текущего задания -->
   <div class="task" id="task">
-    <h2>Выберите количество заданий</h2>
-    <input type="number" id="numTasks" value="3" min="1" max="10">
-    <button onclick="generateTasks()">Создать задания</button>
+    <h2>Здесь будет ваше задание</h2>
   </div>
   <button class="check-btn" id="checkBtn" onclick="checkAnswer()" style="display:none;">Проверить</button>
 </div>
@@ -108,25 +56,31 @@ let currentTask = 0;
 let score = 0;
 let selectedAnswer = null;
 
-// Пример заданий
-const sampleTasks = [
-  { question: "2 + 2 = ?", options: ["3", "4", "5"], answer: 1 },
-  { question: "Столица Франции?", options: ["Париж", "Лондон", "Берлин"], answer: 0 },
-  { question: "Цвет неба?", options: ["Синий", "Зеленый", "Красный"], answer: 0 },
-  { question: "5 * 3 = ?", options: ["15", "10", "20"], answer: 0 },
-  { question: "Язык программирования?", options: ["Python", "Французский", "Китайский"], answer: 0 }
-];
+// Добавление задания из редактора
+function addTask() {
+  const question = document.getElementById('question').value.trim();
+  const options = [
+    document.getElementById('opt0').value.trim(),
+    document.getElementById('opt1').value.trim(),
+    document.getElementById('opt2').value.trim()
+  ];
+  const answer = parseInt(document.getElementById('answer').value);
 
-// Генерация заданий
-function generateTasks() {
-  const n = parseInt(document.getElementById("numTasks").value);
-  tasks = [];
-  for (let i = 0; i < n; i++) {
-    tasks.push(sampleTasks[i % sampleTasks.length]);
+  if(!question || options.some(o=>!o) || isNaN(answer) || answer < 0 || answer > 2) {
+    alert("Заполните все поля корректно!");
+    return;
   }
-  currentTask = 0;
-  score = 0;
+
+  tasks.push({question, options, answer});
+  document.getElementById('question').value = '';
+  document.getElementById('opt0').value = '';
+  document.getElementById('opt1').value = '';
+  document.getElementById('opt2').value = '';
+  document.getElementById('answer').value = '';
+
+  currentTask = tasks.length - 1;
   selectedAnswer = null;
+  score = 0;
   document.getElementById("score").textContent = score;
   renderSidebar();
   renderTask();
@@ -137,62 +91,70 @@ function generateTasks() {
 function renderSidebar() {
   const sidebar = document.getElementById("sidebar");
   sidebar.innerHTML = '';
-  tasks.forEach((t, index) => {
+  tasks.forEach((t,index)=>{
     const btn = document.createElement('button');
-    btn.textContent = "Задание " + (index + 1);
+    btn.textContent = "Задание " + (index+1);
     btn.className = index === currentTask ? 'active' : '';
-    btn.onclick = () => { currentTask = index; selectedAnswer = null; renderTask(); updateSidebar(); };
+    btn.onclick = ()=> {currentTask=index; selectedAnswer=null; renderTask(); updateSidebar();};
     sidebar.appendChild(btn);
   });
 }
 
 // Обновление активной кнопки
-function updateSidebar() {
+function updateSidebar(){
   const buttons = document.querySelectorAll('.sidebar button');
-  buttons.forEach((btn, index) => {
-    btn.classList.toggle('active', index === currentTask);
+  buttons.forEach((btn,index)=>{
+    btn.classList.toggle('active', index===currentTask);
   });
 }
 
-// Рендер задания
+// Рендер текущего задания
 function renderTask() {
-  const taskEl = document.getElementById("task");
+  if(tasks.length===0){
+    document.getElementById('task').innerHTML="<h2>Добавьте задание в редакторе</h2>";
+    document.getElementById("checkBtn").style.display="none";
+    return;
+  }
+  const taskEl = document.getElementById('task');
   const task = tasks[currentTask];
-  taskEl.innerHTML = `<h2>${task.question}</h2>`;
+  taskEl.innerHTML=`<h2>${task.question}</h2>`;
   const optionsDiv = document.createElement('div');
-  optionsDiv.className = 'options';
-  task.options.forEach((opt, index) => {
+  optionsDiv.className='options';
+  task.options.forEach((opt,index)=>{
     const btn = document.createElement('button');
-    btn.textContent = opt;
-    btn.onclick = () => selectAnswer(index);
+    btn.textContent=opt;
+    btn.onclick = ()=> selectAnswer(index);
     optionsDiv.appendChild(btn);
   });
   taskEl.appendChild(optionsDiv);
 }
 
 // Выбор ответа
-function selectAnswer(index) {
-  selectedAnswer = index;
-  const buttons = document.querySelectorAll('.options button');
-  buttons.forEach((btn, i) => btn.style.backgroundColor = i === index ? '#1e90ff' : '');
+function selectAnswer(index){
+  selectedAnswer=index;
+  const buttons=document.querySelectorAll('.options button');
+  buttons.forEach((btn,i)=> btn.style.backgroundColor=i===index ? '#1e90ff' : '');
 }
 
 // Проверка ответа
-function checkAnswer() {
-  if (selectedAnswer === null) return alert("Выберите ответ!");
-  if (selectedAnswer === tasks[currentTask].answer) {
+function checkAnswer(){
+  if(selectedAnswer===null) { alert("Выберите ответ!"); return; }
+  if(selectedAnswer===tasks[currentTask].answer) {
     score++;
-    document.getElementById("score").textContent = score;
+    document.getElementById("score").textContent=score;
   }
-  selectedAnswer = null;
-  if (currentTask < tasks.length - 1) {
+  selectedAnswer=null;
+  if(currentTask<tasks.length-1){
     currentTask++;
     renderTask();
     updateSidebar();
   } else {
-    alert("Все задания выполнены! Ваш результат: " + score + "/" + tasks.length);
+    alert("Все задания выполнены! Результат: "+score+"/"+tasks.length);
   }
 }
+
+// Инициализация
+renderTask();
 </script>
 
 </body>
