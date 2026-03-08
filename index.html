@@ -89,7 +89,7 @@
 <body>
 
 <div class="sidebar" id="sidebar">
-  <!-- Кнопки задач будут динамически -->
+  <!-- Кнопки заданий появятся динамически -->
 </div>
 
 <div class="main">
@@ -106,6 +106,7 @@
 let tasks = [];
 let currentTask = 0;
 let score = 0;
+let selectedAnswer = null;
 
 // Пример заданий
 const sampleTasks = [
@@ -125,6 +126,7 @@ function generateTasks() {
   }
   currentTask = 0;
   score = 0;
+  selectedAnswer = null;
   document.getElementById("score").textContent = score;
   renderSidebar();
   renderTask();
@@ -139,7 +141,7 @@ function renderSidebar() {
     const btn = document.createElement('button');
     btn.textContent = "Задание " + (index + 1);
     btn.className = index === currentTask ? 'active' : '';
-    btn.onclick = () => { currentTask = index; renderTask(); updateSidebar(); };
+    btn.onclick = () => { currentTask = index; selectedAnswer = null; renderTask(); updateSidebar(); };
     sidebar.appendChild(btn);
   });
 }
@@ -169,7 +171,6 @@ function renderTask() {
 }
 
 // Выбор ответа
-let selectedAnswer = null;
 function selectAnswer(index) {
   selectedAnswer = index;
   const buttons = document.querySelectorAll('.options button');
@@ -178,21 +179,21 @@ function selectAnswer(index) {
 
 // Проверка ответа
 function checkAnswer() {
-  if (selectedAnswer === null) return;
+  if (selectedAnswer === null) return alert("Выберите ответ!");
   if (selectedAnswer === tasks[currentTask].answer) {
     score++;
     document.getElementById("score").textContent = score;
   }
-  // Сброс выбора и переход к следующему
   selectedAnswer = null;
   if (currentTask < tasks.length - 1) {
     currentTask++;
     renderTask();
     updateSidebar();
   } else {
-    alert("Все задания выполнены!");
+    alert("Все задания выполнены! Ваш результат: " + score + "/" + tasks.length);
   }
 }
 </script>
+
 </body>
 </html>
