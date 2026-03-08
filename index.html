@@ -1,105 +1,198 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Виджет заданий</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-    }
-    h1 { text-align: center; }
-    #menu, #taskPage {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    .box {
-      width: 100px;
-      height: 100px;
-      background-color: #4CAF50;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      border-radius: 8px;
-      font-size: 20px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      border-radius: 6px;
-    }
-    #result { font-weight: bold; margin-top: 10px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Всплывающее меню заданий</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+  }
+  /* Левая панель */
+  .sidebar {
+    width: 150px;
+    background-color: #2d2d2d;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+  .sidebar button {
+    margin: 5px 0;
+    padding: 10px;
+    border: none;
+    background-color: #444;
+    color: #fff;
+    cursor: pointer;
+  }
+  .sidebar button.active {
+    background-color: #1e90ff;
+  }
+
+  /* Основная область */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    position: relative;
+  }
+
+  /* Баллы в правом верхнем углу */
+  .score {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #1e90ff;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  /* Задание */
+  .task {
+    flex: 1;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .task h2 {
+    margin-bottom: 10px;
+  }
+  .task .options button {
+    margin: 5px 0;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  /* Проверка */
+  .check-btn {
+    padding: 10px 20px;
+    background-color: #1e90ff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    align-self: flex-start;
+  }
+
+</style>
 </head>
 <body>
-  <h1>Выберите количество окошек</h1>
-  <div id="selection">
-    <input type="number" id="numBoxes" placeholder="Введите число окошек" min="1" max="10">
-    <button onclick="createMenu()">Создать меню</button>
+
+<div class="sidebar" id="sidebar">
+  <!-- Кнопки задач будут динамически -->
+</div>
+
+<div class="main">
+  <div class="score" id="score">0</div>
+  <div class="task" id="task">
+    <h2>Выберите количество заданий</h2>
+    <input type="number" id="numTasks" value="3" min="1" max="10">
+    <button onclick="generateTasks()">Создать задания</button>
   </div>
+  <button class="check-btn" id="checkBtn" onclick="checkAnswer()" style="display:none;">Проверить</button>
+</div>
 
-  <div id="menu"></div>
+<script>
+let tasks = [];
+let currentTask = 0;
+let score = 0;
 
-  <div id="taskPage">
-    <p id="taskText">Задание: сколько будет 2 + 2?</p>
-    <input type="number" id="answer" placeholder="Ваш ответ">
-    <button onclick="checkTask()">Проверить задание</button>
-    <div id="result"></div>
-    <button id="nextBtn" onclick="goBackMenu()" style="display:none;">Следующее задание</button>
-  </div>
+// Пример заданий
+const sampleTasks = [
+  { question: "2 + 2 = ?", options: ["3", "4", "5"], answer: 1 },
+  { question: "Столица Франции?", options: ["Париж", "Лондон", "Берлин"], answer: 0 },
+  { question: "Цвет неба?", options: ["Синий", "Зеленый", "Красный"], answer: 0 },
+  { question: "5 * 3 = ?", options: ["15", "10", "20"], answer: 0 },
+  { question: "Язык программирования?", options: ["Python", "Французский", "Китайский"], answer: 0 }
+];
 
-  <script>
-    function createMenu() {
-      const num = parseInt(document.getElementById('numBoxes').value);
-      if(isNaN(num) || num < 1) return alert('Введите число от 1 до 10');
-      const menu = document.getElementById('menu');
-      menu.innerHTML = '';
-      for(let i=1; i<=num; i++) {
-        const box = document.createElement('div');
-        box.className = 'box';
-        box.textContent = i;
-        box.onclick = () => showTask(i);
-        menu.appendChild(box);
-      }
-      document.getElementById('selection').style.display = 'none';
-      menu.style.display = 'flex';
-      menu.style.flexWrap = 'wrap';
-      menu.style.gap = '10px';
-      menu.style.justifyContent = 'center';
-    }
+// Генерация заданий
+function generateTasks() {
+  const n = parseInt(document.getElementById("numTasks").value);
+  tasks = [];
+  for (let i = 0; i < n; i++) {
+    tasks.push(sampleTasks[i % sampleTasks.length]);
+  }
+  currentTask = 0;
+  score = 0;
+  document.getElementById("score").textContent = score;
+  renderSidebar();
+  renderTask();
+  document.getElementById("checkBtn").style.display = "inline-block";
+}
 
-    function showTask(number) {
-      document.getElementById('menu').style.display = 'none';
-      document.getElementById('taskPage').style.display = 'flex';
-      document.getElementById('taskText').textContent = `Задание ${number}: сколько будет 2 + 2?`;
-      document.getElementById('answer').value = '';
-      document.getElementById('result').textContent = '';
-      document.getElementById('nextBtn').style.display = 'none';
-    }
+// Рендер боковой панели
+function renderSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  sidebar.innerHTML = '';
+  tasks.forEach((t, index) => {
+    const btn = document.createElement('button');
+    btn.textContent = "Задание " + (index + 1);
+    btn.className = index === currentTask ? 'active' : '';
+    btn.onclick = () => { currentTask = index; renderTask(); updateSidebar(); };
+    sidebar.appendChild(btn);
+  });
+}
 
-    function checkTask() {
-      const ans = parseInt(document.getElementById('answer').value);
-      const result = document.getElementById('result');
-      if(ans === 4) {
-        result.textContent = 'Верно!';
-        document.getElementById('nextBtn').style.display = 'inline-block';
-      } else {
-        result.textContent = 'Неправильно, попробуйте ещё.';
-      }
-    }
+// Обновление активной кнопки
+function updateSidebar() {
+  const buttons = document.querySelectorAll('.sidebar button');
+  buttons.forEach((btn, index) => {
+    btn.classList.toggle('active', index === currentTask);
+  });
+}
 
-    function goBackMenu() {
-      document.getElementById('taskPage').style.display = 'none';
-      document.getElementById('menu').style.display = 'flex';
-    }
-  </script>
+// Рендер задания
+function renderTask() {
+  const taskEl = document.getElementById("task");
+  const task = tasks[currentTask];
+  taskEl.innerHTML = `<h2>${task.question}</h2>`;
+  const optionsDiv = document.createElement('div');
+  optionsDiv.className = 'options';
+  task.options.forEach((opt, index) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(index);
+    optionsDiv.appendChild(btn);
+  });
+  taskEl.appendChild(optionsDiv);
+}
+
+// Выбор ответа
+let selectedAnswer = null;
+function selectAnswer(index) {
+  selectedAnswer = index;
+  const buttons = document.querySelectorAll('.options button');
+  buttons.forEach((btn, i) => btn.style.backgroundColor = i === index ? '#1e90ff' : '');
+}
+
+// Проверка ответа
+function checkAnswer() {
+  if (selectedAnswer === null) return;
+  if (selectedAnswer === tasks[currentTask].answer) {
+    score++;
+    document.getElementById("score").textContent = score;
+  }
+  // Сброс выбора и переход к следующему
+  selectedAnswer = null;
+  if (currentTask < tasks.length - 1) {
+    currentTask++;
+    renderTask();
+    updateSidebar();
+  } else {
+    alert("Все задания выполнены!");
+  }
+}
+</script>
 </body>
 </html>
